@@ -12,33 +12,46 @@
            /* body {background-color: #0f0f0f;} */
             
            .tableSeasons {
-                width: 200px;                
+                width: 100px;
+                cursor: pointer;                
             }
 
             .tableCalendar {
                 width: 200px;
-                text-align: center;                
+                text-align: center;
+                cursor: pointer;
             }
             
+            .tableBiomes {
+                width: 100px;
+                cursor: pointer;             
+            }
 
         </style>
     </head>
     <body>
-        <h1>HARVESTELLA - What To Plant?</h1>
-        <div class="container" style="float:left;">
+        <div id="contentHead" class="container-fluid">
+            <h1>HARVESTELLA - What To Plant?</h1>
+        </div>
+                
+        <div class="container-fluid" >
             <div class="row row-cols-auto">
                 <div id="contentSeasons" class="col"></div>
                 <div id="contentCalendar" class="col"></div>
+                <div id="contentBiomes" class="col"></div>
                 <div class="col"></div>
             </div>
         </div>
         
-        <div id="contentTable">
+        <div id="contentTable" class="container-fluid">
             <p>contentTable</p>            
-        </div>
+        </div>        
         <p>
             <pre id="output"></pre>
         </p>
+        <div id="contentFoot" class="container" style="text-align: center;">
+            <p><i>By WhyN</i></p>
+        </div>
     </body>
 
     <script>
@@ -152,7 +165,7 @@
                                 
             }
 
-            CanPlant(seasonCurrent)
+            CanPlantSeason(seasonCurrent)
             {                
                 if(this.seasons.includes(seasonCurrent) == true)
                 {
@@ -174,6 +187,21 @@
                 else
                 {
                     return true;
+                }
+            }
+
+            CanPlantBiome(biome)
+            {   if(biome == "")
+                {
+                    return true;
+                }
+                else if(biome == this.biome)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
                 }
             }
             
@@ -1258,53 +1286,54 @@
 
             var dayMax = 30
             var seasons = ["Spring","Summer","Autumn","Winter"]
-
-            var seasonCurrent = 'Spring'
-            var dayCurrent = 1
+            var seasonCurrent = ''
+            var dayCurrent = 0
             var dayLeft = dayMax
             SetDayCurrent(dayCurrent)
-            
+
+            var biomes = ["Farm","Waterside","Cave"]
+            var biomeCurrent = ''
             
             
 
         function BuildTableHeader()
         {
-            var sHmtl = ""
-            sHmtl += `<thead>`
-            sHmtl += `<tr>`            
-            sHmtl += `<th scope="col">Name</th>`
-            sHmtl += `<th scope="col">From</th>`
-            sHmtl += `<th scope="col">Biome</th>`
-            sHmtl += `<th scope="col" colspan="4">Seasons</th>`
-            //sHmtl += `<th scope="col">Size</th>`
-            sHmtl += `<th scope="col">Buy</th>`
-            sHmtl += `<th scope="col">Sell</th>`
-            sHmtl += `<th scope="col">Sell HQ</th>`
-            sHmtl += `<th scope="col">Growth Time</th>`
-            sHmtl += `<th scope="col">Regrowth Time</th>`
-            sHmtl += `<th scope="col">Harvests</th>`
-            sHmtl += `<th scope="col">Yield</th>`
-            sHmtl += `<th scope="col">LifeSpan</th>`
-            sHmtl += `<th scope="col">LifeSpan Yield</th>`
-            sHmtl += `<th scope="col">LifeSpan Sell</th>`
-            sHmtl += `<th scope="col">LifeSpan Profit</th>`
-            sHmtl += `<th scope="col">Monthly Plant</th>`
-            sHmtl += `<th scope="col">Monthly Sell</th>`
-            sHmtl += `<th scope="col">Monthly Profit</th>`
-            sHmtl += `</tr>`
-            sHmtl += `</thead>`
+            var sHtml = ""
+            sHtml += `<thead>`
+            sHtml += `<tr>`            
+            sHtml += `<th scope="col">Name</th>`
+            sHtml += `<th scope="col">From</th>`
+            sHtml += `<th scope="col">Biome</th>`
+            sHtml += `<th scope="col" colspan="4">Seasons</th>`
+            //sHtml += `<th scope="col">Size</th>`
+            sHtml += `<th scope="col">Buy</th>`
+            sHtml += `<th scope="col">Sell</th>`
+            sHtml += `<th scope="col">Sell HQ</th>`
+            sHtml += `<th scope="col">Growth Time</th>`
+            sHtml += `<th scope="col">Regrowth Time</th>`
+            sHtml += `<th scope="col">Harvests</th>`
+            sHtml += `<th scope="col">Yield</th>`
+            sHtml += `<th scope="col">LifeSpan</th>`
+            sHtml += `<th scope="col">LifeSpan Yield</th>`
+            sHtml += `<th scope="col">LifeSpan Sell</th>`
+            sHtml += `<th scope="col">LifeSpan Profit</th>`
+            sHtml += `<th scope="col">Monthly Plant</th>`
+            sHtml += `<th scope="col">Monthly Sell</th>`
+            sHtml += `<th scope="col">Monthly Profit</th>`
+            sHtml += `</tr>`
+            sHtml += `</thead>`
             
-            return sHmtl
+            return sHtml
         }
         
         function BuildTable()
         {
-            var sHmtl = ""
-            sHmtl += `<table class="table table-sm table-bordered table-hover ">` // table-dark
+            var sHtml = ""
+            sHtml += `<table class="table table-sm table-bordered table-hover ">` // table-dark
             
-            sHmtl += BuildTableHeader()
+            sHtml += BuildTableHeader()
 
-            sHmtl += `<tbody class="">`
+            sHtml += `<tbody class="">`
             
             //var dayLeft = dayMax - dayCurrent
                                     
@@ -1315,8 +1344,8 @@
             var cropMapShow = cropMapSortmonthlyProfit
             
             var cropMapShow = new Map([...cropMapShow.entries()].sort((a, b) => {
-                var skipA = (a[1].CanPlant(seasonCurrent) && a[1].CanHarvestFull(dayLeft)) ? false : true
-                var skipB = (b[1].CanPlant(seasonCurrent) && b[1].CanHarvestFull(dayLeft)) ? false : true
+                var skipA = (a[1].CanPlantSeason(seasonCurrent) && a[1].CanHarvestFull(dayLeft) && a[1].CanPlantBiome(biomeCurrent) ) ? false : true
+                var skipB = (b[1].CanPlantSeason(seasonCurrent) && b[1].CanHarvestFull(dayLeft) && b[1].CanPlantBiome(biomeCurrent) ) ? false : true
                 if(skipA == skipB)
                 {
                     return 0
@@ -1345,7 +1374,7 @@
                 {
                     //if(dayLeft < value.lifeSpan || value.seasons.includes(seasonCurrent) == false )
 
-                    if(value.CanPlant(seasonCurrent) && value.CanHarvestFull(dayLeft))
+                    if(value.CanPlantSeason(seasonCurrent) && value.CanHarvestFull(dayLeft) && value.CanPlantBiome(biomeCurrent) )
                     {
                         sRow += `<tr>`
                     }
@@ -1359,41 +1388,73 @@
                 //console.log(value.htmlCells);
             })
 
-            sHmtl += sRow
-            sHmtl += '</tbody>'
+            sHtml += sRow
+            sHtml += '</tbody>'
 
-            sHmtl += "</table>"
+            sHtml += "</table>"
             
-            //console.log(sHmtl);
+            //console.log(sHtml);
 
-            //return sHmtl
-            document.getElementById("contentTable").innerHTML = sHmtl
+            //return sHtml
+            document.getElementById("contentTable").innerHTML = sHtml
         }
 
         BuildTable()
         
         function SelectSeason(season)
         {
-            seasonCurrent = season
+            if(season == seasonCurrent)
+            {
+                seasonCurrent = ''
+            }
+            else
+            {
+                seasonCurrent = season
+            }
+            
             BuildCalendar()
             BuildTable()
         }
 
         function SelectDay(day)
         {
-            SetDayCurrent(day)
+            if(dayCurrent == day)
+            {
+                SetDayCurrent(0)
+            }
+            else
+            {
+                SetDayCurrent(day)
+            }
+            
             BuildCalendar()
             BuildTable()
 
         }
 
+        function SelectBiome(biome)
+        {
+            if(biome == biomeCurrent)
+            {
+                biomeCurrent = ''
+            }
+            else
+            {
+                biomeCurrent = biome
+            }
+            
+            BuildCalendar()
+            BuildTable()
+        }
+        
         function BuildCalendar()
         {
             
-            var sHmtl = ""
+            // Seasons
+            var sHtml = ""
 
-            sHmtl += `<table class="tableSeasons table table-sm table-bordered ">` // table-dark
-            sHmtl += `<tbody class="">`
+            sHtml += `<table class="tableSeasons table table-sm table-bordered ">` // table-dark
+            sHtml += `<tbody class="">`
                         
             seasons.forEach((season) => {
                 var sRow = ""
@@ -1407,17 +1468,18 @@
                 sRow += "" + season + ""
                 sRow += '</td>'                   
                 sRow += '</tr>'
-                sHmtl += sRow                
+                sHtml += sRow                
             });
-            sHmtl += '</tbody>'
-            sHmtl += "</table>"
+            sHtml += '</tbody>'
+            sHtml += "</table>"
 
-            document.getElementById("contentSeasons").innerHTML = sHmtl
+            document.getElementById("contentSeasons").innerHTML = sHtml
 
-            var sHmtl = ""
+            // Calendar
+            var sHtml = ""
             
-            sHmtl += `<table class="tableCalendar table table-sm table-bordered ">` // table-dark
-            sHmtl += `<tbody class="">`
+            sHtml += `<table class="tableCalendar table table-sm table-bordered ">` // table-dark
+            sHtml += `<tbody class="">`
 
             var cols = 5
             var rows = 6
@@ -1448,18 +1510,40 @@
                 }
 
                 sRow += '</tr>'
-                sHmtl += sRow
+                sHtml += sRow
             }
+            
+            sHtml += '</tbody>'
+            sHtml += "</table>"
+            
+            //return sHtml
+            document.getElementById("contentCalendar").innerHTML = sHtml
 
-            
-            
-            
 
-            sHmtl += '</tbody>'
-            sHmtl += "</table>"
-            
-            //return sHmtl
-            document.getElementById("contentCalendar").innerHTML = sHmtl
+            // Biomes
+            var sHtml = ""
+
+            sHtml += `<table class="tableBiomes table table-sm table-bordered ">` // table-dark
+            sHtml += `<tbody class="">`
+                        
+            biomes.forEach((biome) => {
+                var sRow = ""
+                sRow += `<tr>`
+                sCellClass = ""                    
+                if(biome == biomeCurrent)
+                {
+                    sCellClass = "bg-success"
+                }
+                sRow += `<td class="${sCellClass}" onclick="SelectBiome('${biome}')">`
+                sRow += "" + biome + ""
+                sRow += '</td>'                   
+                sRow += '</tr>'
+                sHtml += sRow                
+            });
+            sHtml += '</tbody>'
+            sHtml += "</table>"
+
+            document.getElementById("contentBiomes").innerHTML = sHtml
 
         }
 
