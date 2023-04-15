@@ -1,0 +1,1471 @@
+
+<!doctype html>
+<html lang="en" data-bs-theme="dark">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe" crossorigin="anonymous"></script>
+        <script src="https://code.jquery.com/jquery-3.6.4.min.js" integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=" crossorigin="anonymous"></script>
+    
+        <style>
+           /* body {background-color: #0f0f0f;} */
+            
+           .tableSeasons {
+                width: 200px;                
+            }
+
+            .tableCalendar {
+                width: 200px;
+                text-align: center;                
+            }
+            
+
+        </style>
+    </head>
+    <body>
+        <h1>HARVESTELLA - What To Plant?</h1>
+        <div class="container" style="float:left;">
+            <div class="row row-cols-auto">
+                <div id="contentSeasons" class="col"></div>
+                <div id="contentCalendar" class="col"></div>
+                <div class="col"></div>
+            </div>
+        </div>
+        
+        <div id="contentTable">
+            <p>contentTable</p>            
+        </div>
+        <p>
+            <pre id="output"></pre>
+        </p>
+    </body>
+
+    <script>
+   
+        // Class
+        class Crop {
+
+            // Source Properties
+            id;            
+            displayName;
+            description;
+            from;
+            seedBuy;
+            biome;
+            seasons;
+            sell;
+            sellHq;            
+            size;
+            growthTime;
+            regrowthTime;
+            harvests;
+            yield;
+            //growthTotal;
+
+            // Calculations Properties
+            seedBuyDefault = {id:"CantBuy", where:"N/A", price:0};
+
+            lifeSpan = -999;
+            lifeSpanYield = -999;
+            lifeSpanSell = -999;
+            lifeSpanProfit = -999;
+            
+            monthlyPlant = -999;
+            monthlySell = -999;
+            monthlyProfit = -999;
+
+            htmlCells = "";
+
+            constructor(id) {
+                this.id = id;
+            }
+
+            introduceSelf() {
+                console.log(`Hi! I'm ${this.displayName}`);
+            }
+
+            DoCalulations()
+            {
+                if(this.seedBuy.length >= 1)
+                {
+                    this.seedBuy.sort((a,b) => a.price - b.price);
+                    this.seedBuyDefault = this.seedBuy[0]
+                }
+                //else
+                //{
+                //    this.seedBuyDefault = {id:"CantBuy", where:"N/A", price:0};
+                //}
+                                                
+                if(this.harvests >= 1)                
+                {
+                    this.lifeSpan = (this.growthTime + (this.regrowthTime * (this.harvests - 1)) )
+                    this.lifeSpanYield = this.yield * this.harvests                                        
+                    this.lifeSpanSell = this.lifeSpanYield * this.sell
+                    this.lifeSpanProfit = this.lifeSpanSell - this.seedBuyDefault.price
+                }
+                                
+                if(this.from == 'Seed')
+                {
+                    this.monthlyPlant = Math.floor(30 / this.lifeSpan)
+                    this.monthlySell = this.lifeSpanSell * this.monthlyPlant
+                    this.monthlyProfit = this.lifeSpanProfit * this.monthlyPlant
+                }
+                
+
+            }
+
+            BuildRowCells()
+            {
+                this.htmlCells = ""
+                               
+                //this.htmlCells += '<td>'
+                //this.htmlCells += '</td>'
+                
+                this.htmlCells += `<th scope="row">${this.displayName}</th>`
+                this.htmlCells += `<td>${this.from}</td>`                
+                this.htmlCells += `<td>${this.biome}</td>`                
+                
+                this.seasons.forEach(item => {
+                    this.htmlCells += `<td>${item}</td>`                    
+                });
+
+                
+
+                //this.htmlCells += `<td>${this.size}</td>`
+                this.htmlCells += `<td>${this.seedBuyDefault.price} (${this.seedBuyDefault.where})</td>`
+                this.htmlCells += `<td>${this.sell}</td>`
+                this.htmlCells += `<td>${this.sellHq}</td>`
+                this.htmlCells += `<td>${this.growthTime}</td>`
+                this.htmlCells += `<td>${this.regrowthTime}</td>`
+                this.htmlCells += `<td>${this.harvests}</td>`
+                this.htmlCells += `<td>${this.yield}</td>`
+
+                this.htmlCells += `<td>${this.lifeSpan}</td>`
+                this.htmlCells += `<td>${this.lifeSpanYield}</td>`
+                this.htmlCells += `<td>${this.lifeSpanSell}</td>`
+                this.htmlCells += `<td>${this.lifeSpanProfit}</td>`
+
+                this.htmlCells += `<td>${this.monthlyPlant}</td>`
+                this.htmlCells += `<td>${this.monthlySell}</td>`
+                this.htmlCells += `<td>${this.monthlyProfit}</td>`
+                                
+            }
+
+            CanPlant(seasonCurrent)
+            {                
+                if(this.seasons.includes(seasonCurrent) == true)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+
+            }
+
+            CanHarvestFull(dayLeft)
+            {
+                if(dayLeft < this.lifeSpan)
+                {
+                    return false;                    
+                }
+                else
+                {
+                    return true;
+                }
+            }
+            
+        }
+
+        // Data
+        // const dataJsonStr = ``
+        const dataJsonStr = `
+        {
+    "Crop":  {
+                 "WitheredCrops":  {
+                                       "id":  "WitheredCrops",
+                                       "displayName":  "Withered Crops",
+                                       "description":  "",
+                                       "seedBuy":  [
+
+                                                   ],
+                                       "from":  "Quietus",
+                                       "biome":  "Any",
+                                       "seasons":  [
+                                                       "",
+                                                       "",
+                                                       "",
+                                                       ""
+                                                   ],
+                                       "sell":  5,
+                                       "sellHq":  0,
+                                       "size":  1,
+                                       "growthTime":  0,
+                                       "regrowthTime":  0,
+                                       "harvests":  1,
+                                       "yield":  1
+                                   },
+                 "StellarWheat":  {
+                                      "id":  "StellarWheat",
+                                      "displayName":  "Stellar Wheat",
+                                      "description":  "",
+                                      "seedBuy":  [
+                                                      {
+                                                          "id":  "LetheVillage",
+                                                          "where":  "Lethe Village",
+                                                          "price":  40
+                                                      }
+                                                  ],
+                                      "from":  "Seed",
+                                      "biome":  "Farm",
+                                      "seasons":  [
+                                                      "Spring",
+                                                      "Summer",
+                                                      "Autumn",
+                                                      ""
+                                                  ],
+                                      "sell":  55,
+                                      "sellHq":  70,
+                                      "size":  1,
+                                      "growthTime":  2,
+                                      "regrowthTime":  0,
+                                      "harvests":  1,
+                                      "yield":  1
+                                  },
+                 "Grass":  {
+                               "id":  "Grass",
+                               "displayName":  "Grass",
+                               "description":  "",
+                               "seedBuy":  [
+                                               {
+                                                   "id":  "LetheVillage",
+                                                   "where":  "Lethe Village",
+                                                   "price":  30
+                                               }
+                                           ],
+                               "from":  "Seed",
+                               "biome":  "Farm",
+                               "seasons":  [
+                                               "Spring",
+                                               "Summer",
+                                               "Autumn",
+                                               ""
+                                           ],
+                               "sell":  35,
+                               "sellHq":  45,
+                               "size":  1,
+                               "growthTime":  2,
+                               "regrowthTime":  0,
+                               "harvests":  1,
+                               "yield":  1
+                           },
+                 "DressLettuce":  {
+                                      "id":  "DressLettuce",
+                                      "displayName":  "Dress Lettuce",
+                                      "description":  "",
+                                      "seedBuy":  [
+                                                      {
+                                                          "id":  "LetheVillage",
+                                                          "where":  "Lethe Village",
+                                                          "price":  55
+                                                      }
+                                                  ],
+                                      "from":  "Seed",
+                                      "biome":  "Farm",
+                                      "seasons":  [
+                                                      "Spring",
+                                                      "Summer",
+                                                      "Autumn",
+                                                      ""
+                                                  ],
+                                      "sell":  85,
+                                      "sellHq":  105,
+                                      "size":  1,
+                                      "growthTime":  2,
+                                      "regrowthTime":  0,
+                                      "harvests":  1,
+                                      "yield":  1
+                                  },
+                 "Unionion":  {
+                                  "id":  "Unionion",
+                                  "displayName":  "Unionion",
+                                  "description":  "",
+                                  "seedBuy":  [
+                                                  {
+                                                      "id":  "LetheVillage",
+                                                      "where":  "Lethe Village",
+                                                      "price":  130
+                                                  },
+                                                  {
+                                                      "id":  "LetheVillage",
+                                                      "where":  "Lethe Village",
+                                                      "price":  130
+                                                  },
+                                                  {
+                                                      "id":  "NemeaTown",
+                                                      "where":  "Nemea Town",
+                                                      "price":  105
+                                                  }
+                                              ],
+                                  "from":  "Seed",
+                                  "biome":  "Farm",
+                                  "seasons":  [
+                                                  "Spring",
+                                                  "",
+                                                  "Autumn",
+                                                  ""
+                                              ],
+                                  "sell":  195,
+                                  "sellHq":  245,
+                                  "size":  1,
+                                  "growthTime":  3,
+                                  "regrowthTime":  0,
+                                  "harvests":  1,
+                                  "yield":  1
+                              },
+                 "Carrop":  {
+                                "id":  "Carrop",
+                                "displayName":  "Carrop",
+                                "description":  "",
+                                "seedBuy":  [
+                                                {
+                                                    "id":  "LetheVillage",
+                                                    "where":  "Lethe Village",
+                                                    "price":  105
+                                                },
+                                                {
+                                                    "id":  "NemeaTown",
+                                                    "where":  "Nemea Town",
+                                                    "price":  95
+                                                }
+                                            ],
+                                "from":  "Seed",
+                                "biome":  "Farm",
+                                "seasons":  [
+                                                "Spring",
+                                                "Summer",
+                                                "",
+                                                ""
+                                            ],
+                                "sell":  115,
+                                "sellHq":  145,
+                                "size":  1,
+                                "growthTime":  1,
+                                "regrowthTime":  0,
+                                "harvests":  1,
+                                "yield":  1
+                            },
+                 "Cucumble":  {
+                                  "id":  "Cucumble",
+                                  "displayName":  "Cucumble",
+                                  "description":  "",
+                                  "seedBuy":  [
+                                                  {
+                                                      "id":  "LetheVillage",
+                                                      "where":  "Lethe Village",
+                                                      "price":  370
+                                                  }
+                                              ],
+                                  "from":  "Seed",
+                                  "biome":  "Farm",
+                                  "seasons":  [
+                                                  "Spring",
+                                                  "",
+                                                  "",
+                                                  ""
+                                              ],
+                                  "sell":  200,
+                                  "sellHq":  250,
+                                  "size":  1,
+                                  "growthTime":  4,
+                                  "regrowthTime":  3,
+                                  "harvests":  7,
+                                  "yield":  1
+                              },
+                 "Morrocorn":  {
+                                   "id":  "Morrocorn",
+                                   "displayName":  "Morrocorn",
+                                   "description":  "",
+                                   "seedBuy":  [
+                                                   {
+                                                       "id":  "LetheVillage",
+                                                       "where":  "Lethe Village",
+                                                       "price":  230
+                                                   },
+                                                   {
+                                                       "id":  "Shatolla",
+                                                       "where":  "Shatolla",
+                                                       "price":  200
+                                                   }
+                                               ],
+                                   "from":  "Seed",
+                                   "biome":  "Farm",
+                                   "seasons":  [
+                                                   "",
+                                                   "Summer",
+                                                   "Autumn",
+                                                   ""
+                                               ],
+                                   "sell":  400,
+                                   "sellHq":  500,
+                                   "size":  1,
+                                   "growthTime":  4,
+                                   "regrowthTime":  0,
+                                   "harvests":  1,
+                                   "yield":  1
+                               },
+                 "Bellhop":  {
+                                 "id":  "Bellhop",
+                                 "displayName":  "Bellhop",
+                                 "description":  "",
+                                 "seedBuy":  [
+                                                 {
+                                                     "id":  "Shatolla",
+                                                     "where":  "Shatolla",
+                                                     "price":  560
+                                                 }
+                                             ],
+                                 "from":  "Seed",
+                                 "biome":  "Farm",
+                                 "seasons":  [
+                                                 "",
+                                                 "Summer",
+                                                 "",
+                                                 ""
+                                             ],
+                                 "sell":  45,
+                                 "sellHq":  55,
+                                 "size":  1,
+                                 "growthTime":  7,
+                                 "regrowthTime":  1,
+                                 "harvests":  24,
+                                 "yield":  1
+                             },
+                 "Lumpotato":  {
+                                   "id":  "Lumpotato",
+                                   "displayName":  "Lumpotato",
+                                   "description":  "",
+                                   "seedBuy":  [
+                                                   {
+                                                       "id":  "LetheVillage",
+                                                       "where":  "Lethe Village",
+                                                       "price":  90
+                                                   },
+                                                   {
+                                                       "id":  "Argene",
+                                                       "where":  "Argene",
+                                                       "price":  80
+                                                   }
+                                               ],
+                                   "from":  "Seed",
+                                   "biome":  "Farm",
+                                   "seasons":  [
+                                                   "",
+                                                   "",
+                                                   "Autumn",
+                                                   "Winter"
+                                               ],
+                                   "sell":  120,
+                                   "sellHq":  150,
+                                   "size":  1,
+                                   "growthTime":  3,
+                                   "regrowthTime":  0,
+                                   "harvests":  1,
+                                   "yield":  1
+                               },
+                 "RoyalEggplant":  {
+                                       "id":  "RoyalEggplant",
+                                       "displayName":  "Royal Eggplant",
+                                       "description":  "",
+                                       "seedBuy":  [
+                                                       {
+                                                           "id":  "LetheVillage",
+                                                           "where":  "Lethe Village",
+                                                           "price":  780
+                                                       }
+                                                   ],
+                                       "from":  "Seed",
+                                       "biome":  "Farm",
+                                       "seasons":  [
+                                                       "",
+                                                       "",
+                                                       "Autumn",
+                                                       ""
+                                                   ],
+                                       "sell":  480,
+                                       "sellHq":  960,
+                                       "size":  1,
+                                       "growthTime":  5,
+                                       "regrowthTime":  2,
+                                       "harvests":  3,
+                                       "yield":  1
+                                   },
+                 "RainbowBean":  {
+                                     "id":  "RainbowBean",
+                                     "displayName":  "Rainbow Bean",
+                                     "description":  "",
+                                     "seedBuy":  [
+                                                     {
+                                                         "id":  "LetheVillage",
+                                                         "where":  "Lethe Village",
+                                                         "price":  180
+                                                     }
+                                                 ],
+                                     "from":  "Seed",
+                                     "biome":  "Farm",
+                                     "seasons":  [
+                                                     "",
+                                                     "",
+                                                     "Autumn",
+                                                     ""
+                                                 ],
+                                     "sell":  40,
+                                     "sellHq":  50,
+                                     "size":  1,
+                                     "growthTime":  6,
+                                     "regrowthTime":  2,
+                                     "harvests":  5,
+                                     "yield":  1
+                                 },
+                 "LanternPumpkin":  {
+                                        "id":  "LanternPumpkin",
+                                        "displayName":  "Lantern Pumpkin",
+                                        "description":  "",
+                                        "seedBuy":  [
+                                                        {
+                                                            "id":  "LetheVillage",
+                                                            "where":  "Lethe Village",
+                                                            "price":  1800
+                                                        }
+                                                    ],
+                                        "from":  "Seed",
+                                        "biome":  "Farm",
+                                        "seasons":  [
+                                                        "",
+                                                        "",
+                                                        "Autumn",
+                                                        ""
+                                                    ],
+                                        "sell":  3750,
+                                        "sellHq":  4700,
+                                        "size":  1,
+                                        "growthTime":  11,
+                                        "regrowthTime":  0,
+                                        "harvests":  1,
+                                        "yield":  1
+                                    },
+                 "HoneyFlower":  {
+                                     "id":  "HoneyFlower",
+                                     "displayName":  "Honey Flower",
+                                     "description":  "",
+                                     "seedBuy":  [
+                                                     {
+                                                         "id":  "Shatolla",
+                                                         "where":  "Shatolla",
+                                                         "price":  380
+                                                     }
+                                                 ],
+                                     "from":  "Seed",
+                                     "biome":  "Waterside",
+                                     "seasons":  [
+                                                     "Spring",
+                                                     "Summer",
+                                                     "Autumn",
+                                                     ""
+                                                 ],
+                                     "sell":  630,
+                                     "sellHq":  785,
+                                     "size":  1,
+                                     "growthTime":  6,
+                                     "regrowthTime":  0,
+                                     "harvests":  1,
+                                     "yield":  1
+                                 },
+                 "CurryHerb":  {
+                                   "id":  "CurryHerb",
+                                   "displayName":  "Curry Herb",
+                                   "description":  "",
+                                   "seedBuy":  [
+                                                   {
+                                                       "id":  "LetheVillage",
+                                                       "where":  "Lethe Village",
+                                                       "price":  270
+                                                   },
+                                                   {
+                                                       "id":  "Argene",
+                                                       "where":  "Argene",
+                                                       "price":  240
+                                                   }
+                                               ],
+                                   "from":  "Seed",
+                                   "biome":  "Cave",
+                                   "seasons":  [
+                                                   "Spring",
+                                                   "Summer",
+                                                   "Autumn",
+                                                   ""
+                                               ],
+                                   "sell":  350,
+                                   "sellHq":  435,
+                                   "size":  1,
+                                   "growthTime":  6,
+                                   "regrowthTime":  0,
+                                   "harvests":  1,
+                                   "yield":  1
+                               },
+                 "GrouplyGrapes":  {
+                                       "id":  "GrouplyGrapes",
+                                       "displayName":  "Grouply Grapes",
+                                       "description":  "",
+                                       "seedBuy":  [
+                                                       {
+                                                           "id":  "LetheVillage",
+                                                           "where":  "Lethe Village",
+                                                           "price":  2000
+                                                       }
+                                                   ],
+                                       "from":  "Sapling",
+                                       "biome":  "Farm",
+                                       "seasons":  [
+                                                       "",
+                                                       "",
+                                                       "Autumn",
+                                                       ""
+                                                   ],
+                                       "sell":  85,
+                                       "sellHq":  105,
+                                       "size":  1,
+                                       "growthTime":  6,
+                                       "regrowthTime":  1,
+                                       "harvests":  0,
+                                       "yield":  1
+                                   },
+                 "PrincessChestnut":  {
+                                          "id":  "PrincessChestnut",
+                                          "displayName":  "Princess Chestnut",
+                                          "description":  "",
+                                          "seedBuy":  [
+                                                          {
+                                                              "id":  "LetheVillage",
+                                                              "where":  "Lethe Village",
+                                                              "price":  2200
+                                                          }
+                                                      ],
+                                          "from":  "Sapling",
+                                          "biome":  "Farm",
+                                          "seasons":  [
+                                                          "",
+                                                          "",
+                                                          "Autumn",
+                                                          ""
+                                                      ],
+                                          "sell":  60,
+                                          "sellHq":  75,
+                                          "size":  4,
+                                          "growthTime":  7,
+                                          "regrowthTime":  2,
+                                          "harvests":  0,
+                                          "yield":  3
+                                      },
+                 "NemeanTomato":  {
+                                      "id":  "NemeanTomato",
+                                      "displayName":  "Nemean Tomato",
+                                      "description":  "",
+                                      "seedBuy":  [
+                                                      {
+                                                          "id":  "NemeaTown",
+                                                          "where":  "Nemea Town",
+                                                          "price":  170
+                                                      }
+                                                  ],
+                                      "from":  "Seed",
+                                      "biome":  "Farm",
+                                      "seasons":  [
+                                                      "Spring",
+                                                      "Summer",
+                                                      "",
+                                                      ""
+                                                  ],
+                                      "sell":  65,
+                                      "sellHq":  95,
+                                      "size":  1,
+                                      "growthTime":  5,
+                                      "regrowthTime":  1,
+                                      "harvests":  6,
+                                      "yield":  1
+                                  },
+                 "TingleRadish":  {
+                                      "id":  "TingleRadish",
+                                      "displayName":  "Tingle Radish",
+                                      "description":  "",
+                                      "seedBuy":  [
+                                                      {
+                                                          "id":  "NemeaTown",
+                                                          "where":  "Nemea Town",
+                                                          "price":  390
+                                                      }
+                                                  ],
+                                      "from":  "Seed",
+                                      "biome":  "Farm",
+                                      "seasons":  [
+                                                      "Spring",
+                                                      "",
+                                                      "",
+                                                      ""
+                                                  ],
+                                      "sell":  530,
+                                      "sellHq":  1100,
+                                      "size":  1,
+                                      "growthTime":  4,
+                                      "regrowthTime":  0,
+                                      "harvests":  1,
+                                      "yield":  1
+                                  },
+                 "Strawbuddy":  {
+                                    "id":  "Strawbuddy",
+                                    "displayName":  "Strawbuddy",
+                                    "description":  "",
+                                    "seedBuy":  [
+                                                    {
+                                                        "id":  "NemeaTown",
+                                                        "where":  "Nemea Town",
+                                                        "price":  220
+                                                    }
+                                                ],
+                                    "from":  "Seed",
+                                    "biome":  "Farm",
+                                    "seasons":  [
+                                                    "Spring",
+                                                    "",
+                                                    "",
+                                                    ""
+                                                ],
+                                    "sell":  130,
+                                    "sellHq":  160,
+                                    "size":  1,
+                                    "growthTime":  4,
+                                    "regrowthTime":  2,
+                                    "harvests":  5,
+                                    "yield":  1
+                                },
+                 "WistyPeach":  {
+                                    "id":  "WistyPeach",
+                                    "displayName":  "Wisty Peach",
+                                    "description":  "",
+                                    "seedBuy":  [
+                                                    {
+                                                        "id":  "NemeaTown",
+                                                        "where":  "Nemea Town",
+                                                        "price":  4200
+                                                    }
+                                                ],
+                                    "from":  "Sapling",
+                                    "biome":  "Farm",
+                                    "seasons":  [
+                                                    "Spring",
+                                                    "",
+                                                    "",
+                                                    ""
+                                                ],
+                                    "sell":  115,
+                                    "sellHq":  230,
+                                    "size":  4,
+                                    "growthTime":  10,
+                                    "regrowthTime":  2,
+                                    "harvests":  0,
+                                    "yield":  3
+                                },
+                 "Nectarcane":  {
+                                    "id":  "Nectarcane",
+                                    "displayName":  "Nectarcane",
+                                    "description":  "",
+                                    "seedBuy":  [
+                                                    {
+                                                        "id":  "NemeaTown",
+                                                        "where":  "Nemea Town",
+                                                        "price":  370
+                                                    },
+                                                    {
+                                                        "id":  "Shatolla",
+                                                        "where":  "Shatolla",
+                                                        "price":  370
+                                                    }
+                                                ],
+                                    "from":  "Seed",
+                                    "biome":  "Waterside",
+                                    "seasons":  [
+                                                    "Spring",
+                                                    "Summer",
+                                                    "Autumn",
+                                                    ""
+                                                ],
+                                    "sell":  250,
+                                    "sellHq":  310,
+                                    "size":  1,
+                                    "growthTime":  4,
+                                    "regrowthTime":  3,
+                                    "harvests":  3,
+                                    "yield":  1
+                                },
+                 "ShatollanPaprika":  {
+                                          "id":  "ShatollanPaprika",
+                                          "displayName":  "Shatollan Paprika",
+                                          "description":  "",
+                                          "seedBuy":  [
+                                                          {
+                                                              "id":  "Shatolla",
+                                                              "where":  "Shatolla",
+                                                              "price":  250
+                                                          }
+                                                      ],
+                                          "from":  "Seed",
+                                          "biome":  "Farm",
+                                          "seasons":  [
+                                                          "",
+                                                          "Summer",
+                                                          "",
+                                                          ""
+                                                      ],
+                                          "sell":  110,
+                                          "sellHq":  135,
+                                          "size":  1,
+                                          "growthTime":  5,
+                                          "regrowthTime":  2,
+                                          "harvests":  9,
+                                          "yield":  1
+                                      },
+                 "SeatideGarlic":  {
+                                       "id":  "SeatideGarlic",
+                                       "displayName":  "Seatide Garlic",
+                                       "description":  "",
+                                       "seedBuy":  [
+                                                       {
+                                                           "id":  "Shatolla",
+                                                           "where":  "Shatolla",
+                                                           "price":  650
+                                                       }
+                                                   ],
+                                       "from":  "Seed",
+                                       "biome":  "Farm",
+                                       "seasons":  [
+                                                       "",
+                                                       "Summer",
+                                                       "",
+                                                       ""
+                                                   ],
+                                       "sell":  1000,
+                                       "sellHq":  2000,
+                                       "size":  1,
+                                       "growthTime":  6,
+                                       "regrowthTime":  0,
+                                       "harvests":  1,
+                                       "yield":  1
+                                   },
+                 "Numblemon":  {
+                                   "id":  "Numblemon",
+                                   "displayName":  "Numblemon",
+                                   "description":  "",
+                                   "seedBuy":  [
+                                                   {
+                                                       "id":  "Shatolla",
+                                                       "where":  "Shatolla",
+                                                       "price":  2200
+                                                   }
+                                               ],
+                                   "from":  "Sapling",
+                                   "biome":  "Farm",
+                                   "seasons":  [
+                                                   "",
+                                                   "Summer",
+                                                   "",
+                                                   ""
+                                               ],
+                                   "sell":  95,
+                                   "sellHq":  120,
+                                   "size":  1,
+                                   "growthTime":  6,
+                                   "regrowthTime":  1,
+                                   "harvests":  0,
+                                   "yield":  1
+                               },
+                 "IsletWatermelon":  {
+                                         "id":  "IsletWatermelon",
+                                         "displayName":  "Islet Watermelon",
+                                         "description":  "",
+                                         "seedBuy":  [
+                                                         {
+                                                             "id":  "Shatolla",
+                                                             "where":  "Shatolla",
+                                                             "price":  2500
+                                                         }
+                                                     ],
+                                         "from":  "Seed",
+                                         "biome":  "Waterside",
+                                         "seasons":  [
+                                                         "",
+                                                         "Summer",
+                                                         "",
+                                                         ""
+                                                     ],
+                                         "sell":  4600,
+                                         "sellHq":  5800,
+                                         "size":  1,
+                                         "growthTime":  12,
+                                         "regrowthTime":  0,
+                                         "harvests":  1,
+                                         "yield":  1
+                                     },
+                 "Lococonut":  {
+                                   "id":  "Lococonut",
+                                   "displayName":  "Lococonut",
+                                   "description":  "",
+                                   "seedBuy":  [
+                                                   {
+                                                       "id":  "Shatolla",
+                                                       "where":  "Shatolla",
+                                                       "price":  3200
+                                                   }
+                                               ],
+                                   "from":  "Sapling",
+                                   "biome":  "Waterside",
+                                   "seasons":  [
+                                                   "Spring",
+                                                   "Summer",
+                                                   "Autumn",
+                                                   ""
+                                               ],
+                                   "sell":  35,
+                                   "sellHq":  45,
+                                   "size":  4,
+                                   "growthTime":  7,
+                                   "regrowthTime":  2,
+                                   "harvests":  0,
+                                   "yield":  3
+                               },
+                 "ArgeneCabbage":  {
+                                       "id":  "ArgeneCabbage",
+                                       "displayName":  "Argene Cabbage",
+                                       "description":  "",
+                                       "seedBuy":  [
+                                                       {
+                                                           "id":  "Argene",
+                                                           "where":  "Argene",
+                                                           "price":  220
+                                                       }
+                                                   ],
+                                       "from":  "Seed",
+                                       "biome":  "Farm",
+                                       "seasons":  [
+                                                       "Spring",
+                                                       "",
+                                                       "",
+                                                       "Winter"
+                                                   ],
+                                       "sell":  320,
+                                       "sellHq":  400,
+                                       "size":  1,
+                                       "growthTime":  4,
+                                       "regrowthTime":  0,
+                                       "harvests":  1,
+                                       "yield":  1
+                                   },
+                 "ChillyPlant":  {
+                                     "id":  "ChillyPlant",
+                                     "displayName":  "Chilly Plant",
+                                     "description":  "",
+                                     "seedBuy":  [
+                                                     {
+                                                         "id":  "Argene",
+                                                         "where":  "Argene",
+                                                         "price":  800
+                                                     }
+                                                 ],
+                                     "from":  "Seed",
+                                     "biome":  "Farm",
+                                     "seasons":  [
+                                                     "",
+                                                     "",
+                                                     "",
+                                                     "Winter"
+                                                 ],
+                                     "sell":  1300,
+                                     "sellHq":  1600,
+                                     "size":  1,
+                                     "growthTime":  7,
+                                     "regrowthTime":  0,
+                                     "harvests":  1,
+                                     "yield":  1
+                                 },
+                 "SnowcapMikan":  {
+                                      "id":  "SnowcapMikan",
+                                      "displayName":  "Snowcap Mikan",
+                                      "description":  "",
+                                      "seedBuy":  [
+                                                      {
+                                                          "id":  "Argene",
+                                                          "where":  "Argene",
+                                                          "price":  2300
+                                                      }
+                                                  ],
+                                      "from":  "Sapling",
+                                      "biome":  "Farm",
+                                      "seasons":  [
+                                                      "",
+                                                      "",
+                                                      "",
+                                                      "Winter"
+                                                  ],
+                                      "sell":  65,
+                                      "sellHq":  80,
+                                      "size":  4,
+                                      "growthTime":  7,
+                                      "regrowthTime":  2,
+                                      "harvests":  0,
+                                      "yield":  3
+                                  },
+                 "SudorPepper":  {
+                                     "id":  "SudorPepper",
+                                     "displayName":  "Sudor Pepper",
+                                     "description":  "",
+                                     "seedBuy":  [
+                                                     {
+                                                         "id":  "Argene",
+                                                         "where":  "Argene",
+                                                         "price":  400
+                                                     }
+                                                 ],
+                                     "from":  "Seed",
+                                     "biome":  "Cave",
+                                     "seasons":  [
+                                                     "Spring",
+                                                     "Summer",
+                                                     "Autumn",
+                                                     ""
+                                                 ],
+                                     "sell":  250,
+                                     "sellHq":  310,
+                                     "size":  1,
+                                     "growthTime":  3,
+                                     "regrowthTime":  3,
+                                     "harvests":  3,
+                                     "yield":  1
+                                 },
+                 "RevolPepper":  {
+                                     "id":  "RevolPepper",
+                                     "displayName":  "Revol Pepper",
+                                     "description":  "",
+                                     "seedBuy":  [
+                                                     {
+                                                         "id":  "Argene",
+                                                         "where":  "Argene",
+                                                         "price":  560
+                                                     }
+                                                 ],
+                                     "from":  "Seed",
+                                     "biome":  "Cave",
+                                     "seasons":  [
+                                                     "Spring",
+                                                     "Summer",
+                                                     "Autumn",
+                                                     ""
+                                                 ],
+                                     "sell":  265,
+                                     "sellHq":  330,
+                                     "size":  1,
+                                     "growthTime":  4,
+                                     "regrowthTime":  3,
+                                     "harvests":  5,
+                                     "yield":  1
+                                 },
+                 "EdenRice":  {
+                                  "id":  "EdenRice",
+                                  "displayName":  "Eden Rice",
+                                  "description":  "",
+                                  "seedBuy":  [
+                                                  {
+                                                      "id":  "AbandonedEden",
+                                                      "where":  "Abandoned Eden",
+                                                      "price":  20
+                                                  }
+                                              ],
+                                  "from":  "Seed",
+                                  "biome":  "Farm",
+                                  "seasons":  [
+                                                  "",
+                                                  "Summer",
+                                                  "Autumn",
+                                                  ""
+                                              ],
+                                  "sell":  35,
+                                  "sellHq":  45,
+                                  "size":  1,
+                                  "growthTime":  3,
+                                  "regrowthTime":  0,
+                                  "harvests":  1,
+                                  "yield":  1
+                              },
+                 "PromisedFruit":  {
+                                       "id":  "PromisedFruit",
+                                       "displayName":  "Promised Fruit",
+                                       "description":  "",
+                                       "seedBuy":  [
+
+                                                   ],
+                                       "from":  "Sapling",
+                                       "biome":  "Farm",
+                                       "seasons":  [
+                                                       "Spring",
+                                                       "Summer",
+                                                       "Autumn",
+                                                       "Winter"
+                                                   ],
+                                       "sell":  30,
+                                       "sellHq":  35,
+                                       "size":  4,
+                                       "growthTime":  7,
+                                       "regrowthTime":  2,
+                                       "harvests":  0,
+                                       "yield":  3
+                                   },
+                 "Macocoa":  {
+                                 "id":  "Macocoa",
+                                 "displayName":  "Macocoa",
+                                 "description":  "",
+                                 "seedBuy":  [
+                                                 {
+                                                     "id":  "AbandonedEden",
+                                                     "where":  "Abandoned Eden",
+                                                     "price":  2400
+                                                 }
+                                             ],
+                                 "from":  "Sapling",
+                                 "biome":  "Farm",
+                                 "seasons":  [
+                                                 "",
+                                                 "Summer",
+                                                 "",
+                                                 ""
+                                             ],
+                                 "sell":  100,
+                                 "sellHq":  150,
+                                 "size":  1,
+                                 "growthTime":  6,
+                                 "regrowthTime":  1,
+                                 "harvests":  0,
+                                 "yield":  1
+                             },
+                 "NitroPineapple":  {
+                                        "id":  "NitroPineapple",
+                                        "displayName":  "Nitro Pineapple",
+                                        "description":  "",
+                                        "seedBuy":  [
+
+                                                    ],
+                                        "from":  "Seed",
+                                        "biome":  "Cave",
+                                        "seasons":  [
+                                                        "Spring",
+                                                        "Summer",
+                                                        "Autumn",
+                                                        ""
+                                                    ],
+                                        "sell":  5,
+                                        "sellHq":  5,
+                                        "size":  1,
+                                        "growthTime":  6,
+                                        "regrowthTime":  0,
+                                        "harvests":  1,
+                                        "yield":  1
+                                    },
+                 "Moonfruit":  {
+                                   "id":  "Moonfruit",
+                                   "displayName":  "Moonfruit",
+                                   "description":  "",
+                                   "seedBuy":  [
+
+                                               ],
+                                   "from":  "Sapling",
+                                   "biome":  "Farm",
+                                   "seasons":  [
+                                                   "Spring",
+                                                   "Summer",
+                                                   "Autumn",
+                                                   "Winter"
+                                               ],
+                                   "sell":  100,
+                                   "sellHq":  125,
+                                   "size":  1,
+                                   "growthTime":  12,
+                                   "regrowthTime":  3,
+                                   "harvests":  0,
+                                   "yield":  1
+                               }
+             }
+}
+
+        `
+                
+        // Create Objects
+        const dataJson = JSON.parse(dataJsonStr);
+
+        var cropMap = new Map();
+        /*
+        var newObj = new Crop(element.id)
+        newObj.displayName = element.            
+        cropMap.set(element.id,)
+
+        dataJson.Crop.keys
+        */
+
+        Object.keys(dataJson.Crop).forEach(key => {
+            //console.log(key, dataJson.Crop[key].displayName);
+            var jsonObj = dataJson.Crop[key]
+            var newObj = new Crop(jsonObj.id)
+
+            Object.keys(jsonObj).forEach(PropKey => {
+                newObj[PropKey] = jsonObj[PropKey]
+            });
+            
+            //newObj.displayName = jsonObj['displayName']
+            //newObj.description = jsonObj.description
+            //newObj.seasons = jsonObj.seasons
+            
+            newObj.DoCalulations();
+            newObj.BuildRowCells();
+
+            cropMap.set(newObj.id, newObj)
+                        
+            //cropMap.get(newObj.id).introduceSelf();
+            
+        });
+
+        //console.log(cropMap);
+        //document.getElementById("output").textContent = JSON.stringify(Array.from(cropMap.entries()), null, 4); 
+
+    </script>
+
+    <script>
+
+
+            function SetDayCurrent(day)
+            {
+                dayCurrent = day
+                dayLeft = dayMax - dayCurrent
+
+            }
+
+            var dayMax = 30
+            var seasons = ["Spring","Summer","Autumn","Winter"]
+
+            var seasonCurrent = 'Spring'
+            var dayCurrent = 1
+            var dayLeft = dayMax
+            SetDayCurrent(dayCurrent)
+            
+            
+            
+
+        function BuildTableHeader()
+        {
+            var sHmtl = ""
+            sHmtl += `<thead>`
+            sHmtl += `<tr>`            
+            sHmtl += `<th scope="col">Name</th>`
+            sHmtl += `<th scope="col">From</th>`
+            sHmtl += `<th scope="col">Biome</th>`
+            sHmtl += `<th scope="col" colspan="4">Seasons</th>`
+            //sHmtl += `<th scope="col">Size</th>`
+            sHmtl += `<th scope="col">Buy</th>`
+            sHmtl += `<th scope="col">Sell</th>`
+            sHmtl += `<th scope="col">Sell HQ</th>`
+            sHmtl += `<th scope="col">Growth Time</th>`
+            sHmtl += `<th scope="col">Regrowth Time</th>`
+            sHmtl += `<th scope="col">Harvests</th>`
+            sHmtl += `<th scope="col">Yield</th>`
+            sHmtl += `<th scope="col">LifeSpan</th>`
+            sHmtl += `<th scope="col">LifeSpan Yield</th>`
+            sHmtl += `<th scope="col">LifeSpan Sell</th>`
+            sHmtl += `<th scope="col">LifeSpan Profit</th>`
+            sHmtl += `<th scope="col">Monthly Plant</th>`
+            sHmtl += `<th scope="col">Monthly Sell</th>`
+            sHmtl += `<th scope="col">Monthly Profit</th>`
+            sHmtl += `</tr>`
+            sHmtl += `</thead>`
+            
+            return sHmtl
+        }
+        
+        function BuildTable()
+        {
+            var sHmtl = ""
+            sHmtl += `<table class="table table-sm table-bordered table-hover ">` // table-dark
+            
+            sHmtl += BuildTableHeader()
+
+            sHmtl += `<tbody class="">`
+            
+            //var dayLeft = dayMax - dayCurrent
+                                    
+            var cropMapShow  = cropMap
+
+            const cropMapSortmonthlyProfit = new Map([...cropMapShow.entries()].sort((a, b) => b[1].monthlyProfit - a[1].monthlyProfit));
+                        
+            var cropMapShow = cropMapSortmonthlyProfit
+            
+            var cropMapShow = new Map([...cropMapShow.entries()].sort((a, b) => {
+                var skipA = (a[1].CanPlant(seasonCurrent) && a[1].CanHarvestFull(dayLeft)) ? false : true
+                var skipB = (b[1].CanPlant(seasonCurrent) && b[1].CanHarvestFull(dayLeft)) ? false : true
+                if(skipA == skipB)
+                {
+                    return 0
+                }
+                else if(skipA == true)
+                {
+                    return 1
+                }
+                else if(skipB == true)
+                {
+                    return -1
+                }
+                else
+                {
+                    return 0                   
+                }
+
+                
+            }));
+
+
+
+            var sRow = ""
+            cropMapShow.forEach((value,key)=>{
+                if(value.from == 'Seed')
+                {
+                    //if(dayLeft < value.lifeSpan || value.seasons.includes(seasonCurrent) == false )
+
+                    if(value.CanPlant(seasonCurrent) && value.CanHarvestFull(dayLeft))
+                    {
+                        sRow += `<tr>`
+                    }
+                    else
+                    {
+                        sRow += `<tr class="bg-secondary">`                        
+                    }
+                    sRow += value.htmlCells;
+                    sRow += '</tr>'
+                }
+                //console.log(value.htmlCells);
+            })
+
+            sHmtl += sRow
+            sHmtl += '</tbody>'
+
+            sHmtl += "</table>"
+            
+            //console.log(sHmtl);
+
+            //return sHmtl
+            document.getElementById("contentTable").innerHTML = sHmtl
+        }
+
+        BuildTable()
+        
+        function SelectSeason(season)
+        {
+            seasonCurrent = season
+            BuildCalendar()
+            BuildTable()
+        }
+
+        function SelectDay(day)
+        {
+            SetDayCurrent(day)
+            BuildCalendar()
+            BuildTable()
+
+        }
+
+        function BuildCalendar()
+        {
+            
+            var sHmtl = ""
+
+            sHmtl += `<table class="tableSeasons table table-sm table-bordered ">` // table-dark
+            sHmtl += `<tbody class="">`
+                        
+            seasons.forEach((season) => {
+                var sRow = ""
+                sRow += `<tr>`
+                sCellClass = ""                    
+                if(season == seasonCurrent)
+                {
+                    sCellClass = "bg-success"
+                }
+                sRow += `<td class="${sCellClass}" onclick="SelectSeason('${season}')">`
+                sRow += "" + season + ""
+                sRow += '</td>'                   
+                sRow += '</tr>'
+                sHmtl += sRow                
+            });
+            sHmtl += '</tbody>'
+            sHmtl += "</table>"
+
+            document.getElementById("contentSeasons").innerHTML = sHmtl
+
+            var sHmtl = ""
+            
+            sHmtl += `<table class="tableCalendar table table-sm table-bordered ">` // table-dark
+            sHmtl += `<tbody class="">`
+
+            var cols = 5
+            var rows = 6
+            
+            var cellCounter = 0
+            
+            // Row
+            for (let r = 0; r < rows; r++)
+            {
+                var sRow = ""
+                sRow += `<tr>`
+                
+                // Col
+                for (let c = 0; c < cols; c++)
+                {                    
+                    cellCounter++
+                    var sCell = ""
+                    sCellClass = ""                    
+                    if(cellCounter == dayCurrent)
+                    {
+                        sCellClass = "bg-success"
+                    }
+                    
+                    sCell += `<td class="${sCellClass}" onclick="SelectDay(${cellCounter})">`
+                    sCell += "" + cellCounter + ""
+                    sCell += '</td>'
+                    sRow += sCell
+                }
+
+                sRow += '</tr>'
+                sHmtl += sRow
+            }
+
+            
+            
+            
+
+            sHmtl += '</tbody>'
+            sHmtl += "</table>"
+            
+            //return sHmtl
+            document.getElementById("contentCalendar").innerHTML = sHmtl
+
+        }
+
+        BuildCalendar()
+        
+
+    </script>
+
+</html>
